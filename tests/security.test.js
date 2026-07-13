@@ -55,3 +55,16 @@ test("contains no network or dynamic-code primitives", () => {
 test("loads no remote scripts", () => {
   assert.doesNotMatch(runtimeSource, /<script[^>]+src=["']https?:\/\//i);
 });
+
+test("avoids background and iframe-wide browsing work", () => {
+  assert.equal(manifest.content_scripts[0].all_frames, false);
+  assert.equal(manifest.background, undefined);
+  assert.doesNotMatch(runtimeSource, /\bMutationObserver\b/);
+  assert.doesNotMatch(runtimeSource, /\bsetInterval\s*\(/);
+  assert.doesNotMatch(runtimeSource, /\bsetTimeout\s*\(/);
+});
+
+test("avoids layout-sensitive editor reads", () => {
+  assert.doesNotMatch(runtimeSource, /\.innerText\b/);
+  assert.match(runtimeSource, /\.textContent\b/);
+});

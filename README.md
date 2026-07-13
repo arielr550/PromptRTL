@@ -64,6 +64,8 @@ Sites can opt an individual editor out by adding the
 
 - Chrome blocks extensions on internal pages such as `chrome://` and the Chrome
   Web Store.
+- Editors embedded inside iframes are not processed, which keeps PromptRTL from
+  loading separately in every ad, widget, and embedded page while browsing.
 - Inputs inside closed shadow DOM cannot be reached by content scripts.
 - This first version chooses one base direction per editor. Multi-paragraph
   editors with a different language per paragraph are a possible follow-up.

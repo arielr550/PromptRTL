@@ -3,6 +3,11 @@
 
   const core = globalThis.RTLInputDirection;
   const managedElements = new Set();
+  const elementReferences = new WeakMap();
+  const elementFinalizer =
+    typeof FinalizationRegistry === "function"
+      ? new FinalizationRegistry((reference) => managedElements.delete(reference))
+      : null;
   const originalState = new WeakMap();
   const textInputTypes = new Set(["", "text", "search"]);
   let settings = {
@@ -91,7 +96,9 @@
       return element.value;
     }
 
-    return element.innerText || element.textContent || "";
+    // textContent does not require the browser to calculate layout. Direction
+    // detection only needs character order, not rendered line breaks.
+    return element.textContent || "";
   }
 
   function rememberOriginalState(element) {
@@ -103,20 +110,37 @@
     });
   }
 
+  function trackElement(element) {
+    let reference = elementReferences.get(element);
+    if (!reference) {
+      reference = new WeakRef(element);
+      elementReferences.set(element, reference);
+      elementFinalizer?.register(element, reference);
+    }
+    managedElements.add(reference);
+  }
+
   function applyDirection(element, direction) {
     if (!direction || !active) return;
 
+    if (
+      element.getAttribute("dir") === direction &&
+      element.getAttribute("data-input-direction-helper") === direction
+    ) {
+      return;
+    }
+
     rememberOriginalState(element);
-    managedElements.add(element);
+    trackElement(element);
     element.setAttribute("dir", direction);
     element.setAttribute("data-input-direction-helper", direction);
   }
 
-  function updateDirection(element, insertedText = "") {
+  function updateDirection(element, insertedText = "", currentText) {
     if (!active || !element) return;
 
     const direction = core.directionForEdit(
-      textOf(element),
+      currentText === undefined ? textOf(element) : currentText,
       insertedText,
       element.getAttribute("data-input-direction-helper")
     );
@@ -133,20 +157,32 @@
     } else {
       element.removeAttribute("dir");
     }
-    managedElements.delete(element);
+    const reference = elementReferences.get(element);
+    if (reference) managedElements.delete(reference);
   }
 
   function restoreAllElements() {
-    for (const element of managedElements) {
-      restoreElement(element);
+    for (const reference of managedElements) {
+      const element = reference.deref();
+      if (element) restoreElement(element);
+      else managedElements.delete(reference);
     }
   }
 
   document.addEventListener(
     "beforeinput",
     (event) => {
-      if (event.isComposing) return;
-      updateDirection(editableFromEvent(event), event.data || "");
+      if (!active || event.isComposing || !event.data) return;
+
+      const element = editableFromEvent(event);
+      if (!element) return;
+
+      // beforeinput exists to switch an empty/neutral editor before its first
+      // strong character appears. Once text has a direction, input will handle
+      // reconciliation without doing the work twice for every keystroke.
+      const currentText = textOf(element);
+      if (core.firstStrongDirection(currentText)) return;
+      updateDirection(element, event.data, currentText);
     },
     true
   );
@@ -154,7 +190,7 @@
   document.addEventListener(
     "input",
     (event) => {
-      if (event.isComposing) return;
+      if (!active || event.isComposing) return;
       updateDirection(editableFromEvent(event));
     },
     true
@@ -162,13 +198,19 @@
 
   document.addEventListener(
     "compositionend",
-    (event) => updateDirection(editableFromEvent(event)),
+    (event) => {
+      if (!active) return;
+      updateDirection(editableFromEvent(event));
+    },
     true
   );
 
   document.addEventListener(
     "focusin",
-    (event) => updateDirection(editableFromEvent(event)),
+    (event) => {
+      if (!active) return;
+      updateDirection(editableFromEvent(event));
+    },
     true
   );
 
