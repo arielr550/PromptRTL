@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Input Direction Helper</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <img class="mark" src="../assets/icons/icon48.png" alt="" />
+        <div>
+          <h1>Input Direction</h1>
+          <p>Hebrew-aware prompt boxes</p>
+        </div>
+      </header>
+
+      <label class="setting">
+        <span>
+          <strong>Extension enabled</strong>
+          <small>Automatically detect text direction</small>
+        </span>
+        <input id="enabled" type="checkbox" />
+      </label>
+
+      <label class="setting site-setting">
+        <span>
+          <strong>Enable on this site</strong>
+          <small id="hostname">Current website</small>
+        </span>
+        <input id="site-enabled" type="checkbox" />
+      </label>
+
+      <p class="hint">Direction follows the first Hebrew or Latin letter, so mixed-language sentences remain stable.</p>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>

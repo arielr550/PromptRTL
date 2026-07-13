@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Input Direction Helper fixture</title>
+  </head>
+  <body>
+    <textarea id="hebrew"></textarea>
+    <div id="english" contenteditable="true"><span></span></div>
+    <input id="email" type="email" />
+
+    <script>
+      setTimeout(() => {
+        const hebrew = document.querySelector("#hebrew");
+        const english = document.querySelector("#english");
+        const email = document.querySelector("#email");
+
+        hebrew.value = "שלום AI";
+        english.querySelector("span").textContent = "Summarize המאמר";
+        email.value = "שלום@example.com";
+
+        for (const element of [hebrew, english, email]) {
+          element.dispatchEvent(new InputEvent("input", { bubbles: true, composed: true }));
+        }
+      }, 250);
+
+      setTimeout(() => {
+        const hebrew = document.querySelector("#hebrew");
+        const english = document.querySelector("#english");
+        const email = document.querySelector("#email");
+        const passed =
+          hebrew.getAttribute("dir") === "rtl" &&
+          english.getAttribute("dir") === "ltr" &&
+          !email.hasAttribute("data-input-direction-helper");
+
+        document.body.dataset.testResult = passed ? "passed" : "failed";
+      }, 750);
+    </script>
+  </body>
+</html>

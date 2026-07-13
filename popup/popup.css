@@ -1,0 +1,101 @@
+:root {
+  color-scheme: light;
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #172016;
+  background: #f6f8f3;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  width: 340px;
+  margin: 0;
+}
+
+main {
+  padding: 18px;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.mark {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  object-fit: cover;
+  box-shadow: 0 5px 14px rgb(40 100 60 / 22%);
+}
+
+h1,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+header p {
+  margin-top: 2px;
+  color: #657064;
+  font-size: 12px;
+}
+
+.setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 13px 2px;
+  border-top: 1px solid #dfe5db;
+}
+
+.setting span {
+  min-width: 0;
+}
+
+.setting strong,
+.setting small {
+  display: block;
+}
+
+.setting strong {
+  font-size: 13px;
+}
+
+.setting small {
+  overflow: hidden;
+  margin-top: 3px;
+  color: #727c70;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+input[type="checkbox"] {
+  width: 34px;
+  height: 20px;
+  flex: 0 0 auto;
+  margin: 0;
+  accent-color: #28643c;
+}
+
+.setting.disabled {
+  opacity: 0.45;
+}
+
+.hint {
+  padding-top: 13px;
+  border-top: 1px solid #dfe5db;
+  color: #667064;
+  font-size: 11px;
+  line-height: 1.5;
+}
