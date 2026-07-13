@@ -8,7 +8,7 @@ credentials, or personal data in a public issue.
 
 ## Security design
 
-Input Direction Helper intentionally has a small attack surface:
+PromptRTL intentionally has a small attack surface:
 
 - all executable code ships inside the extension;
 - Manifest V3 and an explicit Content Security Policy disallow remote scripts,

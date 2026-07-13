@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="assets/logo.png" width="160" alt="Input Direction Helper logo" />
+  <img src="assets/logo.png" width="160" alt="PromptRTL logo" />
 </p>
 
-# Input Direction Helper
+# PromptRTL
 
 A small Manifest V3 Chrome extension that automatically fixes text direction in
 AI prompts, search boxes, text areas, and `contenteditable` prompt editors.

@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Input Direction Helper is designed to work entirely on the user's device.
+PromptRTL is designed to work entirely on the user's device.
 
 ## Data handling
 
