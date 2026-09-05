@@ -51,7 +51,7 @@ Changes to this project require clicking the extension's **Reload** button on
 
 No build step and no dependencies are required.
 
-Run the direction tests with:
+Run the direction, content-script behavior, and security tests with:
 
 ```sh
 node --test tests/*.test.js

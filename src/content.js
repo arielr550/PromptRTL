@@ -72,23 +72,30 @@
   }
 
   function editableFromNode(node) {
-    if (!(node instanceof Element)) return null;
-
-    if (isEditable(node)) return node;
-
-    const editableParent = node.closest(
-      'textarea, input, [contenteditable]:not([contenteditable="false"]), [role="textbox"]'
-    );
-    return editableParent && isEditable(editableParent) ? editableParent : null;
+    const ancestors = [];
+    for (; node instanceof Element; node = node.parentElement) ancestors.push(node);
+    return editableFromPath(ancestors);
   }
 
-  function editableFromEvent(event) {
-    for (const node of event.composedPath()) {
-      const editable = editableFromNode(node);
-      if (editable) return editable;
+  function editableFromPath(nodes) {
+    for (const node of nodes) {
+      if (!(node instanceof Element)) continue;
+
+      // An excluded region is a boundary, not a reason to keep searching for
+      // another editor above it in the bubbling event path.
+      if (node.closest("[data-input-direction-helper-ignore]")) return null;
+      if (node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement) {
+        return isEditable(node) ? node : null;
+      }
+      if (node.contentEditable === "false") return null;
+      if (isEditable(node)) return node;
     }
 
     return null;
+  }
+
+  function editableFromEvent(event) {
+    return editableFromPath(event.composedPath());
   }
 
   function textOf(element) {
@@ -157,6 +164,7 @@
     } else {
       element.removeAttribute("dir");
     }
+    originalState.delete(element);
     const reference = elementReferences.get(element);
     if (reference) managedElements.delete(reference);
   }
