@@ -54,13 +54,16 @@ async function launchBrowser({ locale } = {}) {
     `--disable-extensions-except=${outputDirectory}`,
     `--load-extension=${outputDirectory}`
   ];
+  // Chromium on Linux takes its UI language from the environment, not --lang.
   if (locale) args.push(`--lang=${locale}`);
+  const env = locale ? { ...process.env, LANGUAGE: locale, LANG: `${locale}.UTF-8` } : process.env;
 
   const context = await chromium.launchPersistentContext(userDataDirectory, {
     channel: "chromium",
     headless: !process.env.HEADED,
     locale,
-    args
+    args,
+    env
   });
   const origin = `http://127.0.0.1:${server.address().port}`;
   const extensionId = unpackedExtensionId(outputDirectory);

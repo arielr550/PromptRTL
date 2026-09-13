@@ -1,0 +1,38 @@
+{
+  "extDescription": {
+    "message": "Fixes text direction in AI chat boxes for Hebrew, Arabic, Persian, Urdu, and other RTL languages. Fully private.",
+    "description": "Chrome Web Store and extensions page description. Maximum 132 characters."
+  },
+  "popupTagline": {
+    "message": "Private RTL typing for AI chats",
+    "description": "Subtitle under the extension name in the popup."
+  },
+  "enabledLabel": {
+    "message": "Extension enabled",
+    "description": "Label for the global on/off switch."
+  },
+  "enabledDetail": {
+    "message": "Detect text direction automatically",
+    "description": "Explanation under the global on/off switch."
+  },
+  "siteLabel": {
+    "message": "Enable on this site",
+    "description": "Label for the per-site on/off switch."
+  },
+  "siteUnavailable": {
+    "message": "Unavailable on this page",
+    "description": "Shown instead of a hostname on pages such as chrome:// where extensions cannot run."
+  },
+  "hint": {
+    "message": "Each prompt box follows its first letter, so English words inside an RTL sentence won't flip it.",
+    "description": "Footer explaining how direction is chosen."
+  },
+  "languageCode": {
+    "message": "en",
+    "description": "BCP 47 code of this translation, used for the popup's lang attribute."
+  },
+  "textDirection": {
+    "message": "ltr",
+    "description": "Writing direction of this translation: ltr or rtl."
+  }
+}
