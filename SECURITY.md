@@ -14,7 +14,8 @@ PromptRTL intentionally has a small attack surface:
 - Manifest V3 and an explicit Content Security Policy disallow remote scripts,
   inline scripts, dynamic code evaluation, and plugin objects;
 - there are no runtime dependencies, network requests, analytics, background
-  services, or externally connectable APIs;
+  services, or externally connectable APIs; development dependencies are used
+  only by tests and never packaged;
 - prompt contents are processed only in memory and are never persisted;
 - preferences use device-local storage rather than Chrome Sync;
 - password, email, URL, telephone, and numeric inputs are excluded;
@@ -37,8 +38,12 @@ page data.
 
 Before release:
 
-1. Run `node --test tests/*.test.js`.
-2. Run syntax checks on all JavaScript files and validate `manifest.json`.
+1. Run `npm test` for direction, translation, static security, syntax, and
+   package-content checks.
+2. Run `npm run test:e2e` to exercise the packaged extension in Chromium.
 3. Search for newly introduced network APIs, remote URLs, dynamic code execution,
-   HTML injection, dependencies, and additional permissions.
-4. Review the complete packaged extension rather than only the source diff.
+   HTML injection, runtime dependencies, and additional permissions.
+4. Run `npm run package` and review `dist/promptrtl/`, which contains exactly
+   the files in the Chrome Web Store zip.
+5. Type a short prompt in a right-to-left language on ChatGPT, Claude, and
+   Gemini.

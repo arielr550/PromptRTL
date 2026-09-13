@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Plain fields</title>
+    <style>
+      body { font: 16px sans-serif; }
+      textarea, input { display: block; width: 360px; margin: 8px 0; font: inherit; }
+    </style>
+    <script src="log.js"></script>
+  </head>
+  <body>
+    <textarea id="textarea"></textarea>
+    <textarea id="site-auto" dir="auto"></textarea>
+    <input id="text" type="text" />
+    <input id="password" type="password" />
+    <input id="email" type="email" />
+    <textarea id="readonly" readonly>שלום</textarea>
+    <div data-promptrtl-ignore><textarea id="ignored"></textarea></div>
+    <div id="textbox-wrapper" role="textbox"><button id="wrapped-button">שלום</button></div>
+    <shadow-editor></shadow-editor>
+
+    <script>
+      customElements.define("shadow-editor", class extends HTMLElement {
+        constructor() {
+          super();
+          const textarea = document.createElement("textarea");
+          textarea.id = "shadow-textarea";
+          this.attachShadow({ mode: "open" }).append(textarea);
+        }
+      });
+      window.ready = true;
+    </script>
+  </body>
+</html>
