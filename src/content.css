@@ -1,11 +1,12 @@
+/* One direction per editor. Lines without letters (numbers, bullets, empty
+   lines) follow the editor instead of falling back to left-to-right, which is
+   what unicode-bidi: plaintext would do. */
 [data-promptrtl="rtl"] {
   direction: rtl !important;
   text-align: right !important;
-  unicode-bidi: plaintext !important;
 }
 
 [data-promptrtl="ltr"] {
   direction: ltr !important;
   text-align: left !important;
-  unicode-bidi: plaintext !important;
 }

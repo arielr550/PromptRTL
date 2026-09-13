@@ -26,13 +26,13 @@ test("switches a textarea to RTL before the first Hebrew letter is inserted", as
   assert.equal(firstEdit.dir, "rtl", "direction must be applied before insertion");
 
   await page.keyboard.type("לום עולם");
-  assert.deepEqual(await directionState(field), {
-    dir: "rtl",
-    marker: "rtl",
-    direction: "rtl",
-    textAlign: "right",
-    unicodeBidi: (await directionState(field)).unicodeBidi
-  });
+  const state = await directionState(field);
+  assert.equal(state.dir, "rtl");
+  assert.equal(state.marker, "rtl");
+  assert.equal(state.direction, "rtl");
+  assert.equal(state.textAlign, "right");
+  // plaintext would send lines without letters back to left-to-right.
+  assert.notEqual(state.unicodeBidi, "plaintext");
   await page.close();
 });
 
@@ -102,7 +102,9 @@ test("restores a site's own dir attribute when turned off", async () => {
   assert.equal((await directionState(field)).dir, "rtl");
 
   await browser.setSettings({ enabled: false });
-  await page.waitForFunction(() => !document.querySelector("#site-auto").hasAttribute("data-promptrtl"));
+  await page.waitForFunction(() => !document.querySelector("#site-auto").hasAttribute("data-promptrtl"), null, {
+    timeout: 5000
+  });
   assert.equal((await directionState(field)).dir, "auto");
   await page.close();
 });
@@ -116,7 +118,9 @@ test("can be turned off for only the current site", async () => {
   assert.equal((await directionState(field)).marker, null);
 
   await browser.setSettings({ disabledHosts: [] });
-  await page.waitForFunction(() => document.querySelector("#textarea").getAttribute("dir") === "rtl");
+  await page.waitForFunction(() => document.querySelector("#textarea").getAttribute("dir") === "rtl", null, {
+    timeout: 5000
+  });
   await page.close();
 });
 
@@ -128,6 +132,81 @@ test("handles text fields inside open shadow DOM", async () => {
   const state = await directionState(field);
   assert.equal(state.dir, "rtl");
   assert.equal(state.direction, "rtl");
+  await page.close();
+});
+
+test("does not treat buttons inside role=textbox wrappers as editors", async () => {
+  const page = await browser.openPage("plain.html");
+  await page.locator("#wrapped-button").focus();
+  await page.keyboard.press("Space");
+  const state = await directionState(page.locator("#textbox-wrapper"));
+  assert.deepEqual([state.dir, state.marker], [null, null]);
+  await page.close();
+});
+
+test("keeps a dir value the site set after PromptRTL when turned off", async () => {
+  const page = await browser.openPage("plain.html");
+  const field = page.locator("#site-auto");
+  await field.click();
+  await page.keyboard.type("שלום");
+  await field.evaluate((element) => element.setAttribute("dir", "ltr"));
+
+  await browser.setSettings({ enabled: false });
+  await page.waitForFunction(() => !document.querySelector("#site-auto").hasAttribute("data-promptrtl"), null, {
+    timeout: 5000
+  });
+  assert.equal((await directionState(field)).dir, "ltr");
+  await page.close();
+});
+
+test("re-applies the direction to the focused editor when turned back on", async () => {
+  const page = await browser.openPage("plain.html");
+  for (const selector of ["#textarea", "#shadow-textarea"]) {
+    const field = page.locator(selector);
+    await field.click();
+    await page.keyboard.type("שלום");
+
+    await browser.setSettings({ enabled: false });
+    await page.bringToFront();
+    await page.waitForFunction((element) => !element.hasAttribute("dir"), await field.elementHandle(), {
+      timeout: 5000
+    });
+    await field.focus();
+
+    await browser.setSettings({ enabled: true });
+    await page.waitForFunction((element) => element.getAttribute("dir") === "rtl", await field.elementHandle(), {
+      timeout: 5000
+    });
+  }
+  await page.close();
+});
+
+test("ProseMirror composer: mention chips do not decide the prompt direction", async () => {
+  const page = await browser.openPage("prosemirror.html");
+  const editor = page.locator(".ProseMirror");
+  await editor.click();
+  await page.evaluate(() => window.editor.insertMentionAtStart("@Claude"));
+  await page.keyboard.press("End");
+  await page.keyboard.type(" תסכם את המסמך");
+  assert.equal(await page.evaluate(() => window.editor.text()), "@Claude תסכם את המסמך");
+  assert.equal((await directionState(editor)).dir, "rtl");
+  await page.close();
+});
+
+test("ProseMirror composer: lines without letters stay aligned with the editor", async () => {
+  const page = await browser.openPage("prosemirror.html");
+  await page.locator(".ProseMirror").click();
+  await page.keyboard.type("רשימה");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("1. 2. 3.");
+  const rightGaps = await page.evaluate(() =>
+    [...document.querySelectorAll(".ProseMirror p")].map((paragraph) => {
+      const range = document.createRange();
+      range.selectNodeContents(paragraph);
+      return Math.round(paragraph.getBoundingClientRect().right - range.getBoundingClientRect().right);
+    })
+  );
+  assert.deepEqual(rightGaps, [0, 0]);
   await page.close();
 });
 

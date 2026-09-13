@@ -2,14 +2,18 @@
   "use strict";
 
   const core = globalThis.PromptRTLCore;
+  const MARKER = "data-promptrtl";
+  const IGNORE = "data-promptrtl-ignore";
+  const textInputTypes = new Set(["text", "search"]);
   const managedElements = new Set();
   const elementReferences = new WeakMap();
   const elementFinalizer =
     typeof FinalizationRegistry === "function"
       ? new FinalizationRegistry((reference) => managedElements.delete(reference))
       : null;
-  const originalState = new WeakMap();
-  const textInputTypes = new Set(["", "text", "search"]);
+  // The dir attribute each element had before PromptRTL changed it, and the
+  // direction PromptRTL last applied.
+  const appliedState = new WeakMap();
   let settings = {
     enabled: true,
     disabledHosts: []
@@ -31,9 +35,8 @@
       restoreAllElements();
     }
 
-    if (!wasActive && active && document.activeElement) {
-      const element = editableFromNode(document.activeElement);
-      if (element) updateDirection(element);
+    if (!wasActive && active) {
+      updateDirection(focusedEditor());
     }
   }
 
@@ -52,69 +55,82 @@
     );
   }
 
-  function isEditable(element) {
-    if (!(element instanceof Element) || element.closest("[data-promptrtl-ignore]")) {
-      return false;
-    }
-
+  function isSupportedField(element) {
     if (element instanceof HTMLTextAreaElement) {
       return !element.disabled && !element.readOnly;
     }
 
-    if (element instanceof HTMLInputElement) {
-      return textInputTypes.has(element.type) && !element.disabled && !element.readOnly;
-    }
-
     return (
-      (element.hasAttribute("contenteditable") && element.contentEditable !== "false") ||
-      element.getAttribute("role") === "textbox"
+      element instanceof HTMLInputElement &&
+      textInputTypes.has(element.type) &&
+      !element.disabled &&
+      !element.readOnly
     );
   }
 
-  function editableFromNode(node) {
-    const ancestors = [];
-    for (; node instanceof Element; node = node.parentElement) ancestors.push(node);
-    return editableFromPath(ancestors);
-  }
+  // Walks outward from an event target, through open shadow roots, to the
+  // editor being typed in. Opted-out regions and non-editable islands are
+  // boundaries: an edit inside them never affects an editor around them.
+  function editorFromPath(path) {
+    for (let index = 0; index < path.length; index++) {
+      const node = path[index];
+      if (!(node instanceof HTMLElement)) continue;
+      if (node.hasAttribute(IGNORE)) return null;
 
-  function editableFromPath(nodes) {
-    for (const node of nodes) {
-      if (!(node instanceof Element)) continue;
-
-      // An excluded region is a boundary, not a reason to keep searching for
-      // another editor above it in the bubbling event path.
-      if (node.closest("[data-promptrtl-ignore]")) return null;
+      let editor = null;
       if (node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement) {
-        return isEditable(node) ? node : null;
+        if (!isSupportedField(node)) return null;
+        editor = node;
+      } else if (node.contentEditable === "false") {
+        return null;
+      } else if (node.contentEditable === "true" || node.contentEditable === "plaintext-only") {
+        editor = node;
       }
-      if (node.contentEditable === "false") return null;
-      if (isEditable(node)) return node;
+
+      if (editor) {
+        const optedOut = path
+          .slice(index + 1)
+          .some((ancestor) => ancestor instanceof Element && ancestor.hasAttribute(IGNORE));
+        return optedOut ? null : editor;
+      }
     }
 
     return null;
   }
 
-  function editableFromEvent(event) {
-    return editableFromPath(event.composedPath());
+  function focusedEditor() {
+    let element = document.activeElement;
+    while (element?.shadowRoot?.activeElement) element = element.shadowRoot.activeElement;
+
+    const path = [];
+    for (let node = element; node; node = node instanceof ShadowRoot ? node.host : node.parentNode) {
+      path.push(node);
+    }
+    return editorFromPath(path);
   }
 
-  function textOf(element) {
-    if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
-      return element.value;
+  // Finds the first strong character without copying the whole prompt, and
+  // skips non-editable islands such as @-mention chips and file pills, whose
+  // labels are not part of what the user is writing.
+  function contentDirection(editor) {
+    if (editor instanceof HTMLInputElement || editor instanceof HTMLTextAreaElement) {
+      return core.firstStrongDirection(editor.value);
     }
 
-    // textContent does not require the browser to calculate layout. Direction
-    // detection only needs character order, not rendered line breaks.
-    return element.textContent || "";
-  }
-
-  function rememberOriginalState(element) {
-    if (originalState.has(element)) return;
-
-    originalState.set(element, {
-      hadDirection: element.hasAttribute("dir"),
-      direction: element.getAttribute("dir")
+    const walker = document.createTreeWalker(editor, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        if (node.nodeType === Node.TEXT_NODE) return NodeFilter.FILTER_ACCEPT;
+        return node.contentEditable === "false" || node.hasAttribute(IGNORE)
+          ? NodeFilter.FILTER_REJECT
+          : NodeFilter.FILTER_SKIP;
+      }
     });
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      const direction = core.firstStrongDirection(node.data);
+      if (direction) return direction;
+    }
+
+    return null;
   }
 
   function trackElement(element) {
@@ -130,43 +146,43 @@
   function applyDirection(element, direction) {
     if (!direction || !active) return;
 
-    if (
-      element.getAttribute("dir") === direction &&
-      element.getAttribute("data-promptrtl") === direction
-    ) {
+    if (element.getAttribute("dir") === direction && element.getAttribute(MARKER) === direction) {
       return;
     }
 
-    rememberOriginalState(element);
-    trackElement(element);
+    let state = appliedState.get(element);
+    if (!state) {
+      state = { hadDirection: element.hasAttribute("dir"), direction: element.getAttribute("dir") };
+      appliedState.set(element, state);
+      trackElement(element);
+    }
+    state.applied = direction;
     element.setAttribute("dir", direction);
-    element.setAttribute("data-promptrtl", direction);
+    element.setAttribute(MARKER, direction);
   }
 
-  function updateDirection(element, insertedText = "", currentText) {
-    if (!active || !element) return;
+  function updateDirection(editor) {
+    if (!active || !editor) return;
 
-    const direction = core.directionForEdit(
-      currentText === undefined ? textOf(element) : currentText,
-      insertedText,
-      element.getAttribute("data-promptrtl")
-    );
-    applyDirection(element, direction);
+    // An empty or neutral editor keeps its current direction.
+    applyDirection(editor, contentDirection(editor) || editor.getAttribute(MARKER));
   }
 
   function restoreElement(element) {
-    const original = originalState.get(element);
-    if (!original) return;
+    const state = appliedState.get(element);
+    if (!state) return;
 
-    element.removeAttribute("data-promptrtl");
-    if (original.hadDirection) {
-      element.setAttribute("dir", original.direction);
+    appliedState.delete(element);
+    managedElements.delete(elementReferences.get(element));
+    element.removeAttribute(MARKER);
+
+    // If the site changed dir after PromptRTL did, the site's value wins.
+    if (element.getAttribute("dir") !== state.applied) return;
+    if (state.hadDirection) {
+      element.setAttribute("dir", state.direction);
     } else {
       element.removeAttribute("dir");
     }
-    originalState.delete(element);
-    const reference = elementReferences.get(element);
-    if (reference) managedElements.delete(reference);
   }
 
   function restoreAllElements() {
@@ -182,15 +198,12 @@
     (event) => {
       if (!active || event.isComposing || !event.data) return;
 
-      const element = editableFromEvent(event);
-      if (!element) return;
-
-      // beforeinput exists to switch an empty/neutral editor before its first
-      // strong character appears. Once text has a direction, input will handle
-      // reconciliation without doing the work twice for every keystroke.
-      const currentText = textOf(element);
-      if (core.firstStrongDirection(currentText)) return;
-      updateDirection(element, event.data, currentText);
+      // beforeinput exists to switch an empty or neutral editor before its
+      // first letter appears. Once the text has a direction, input reconciles
+      // it without doing the work twice for every keystroke.
+      const editor = editorFromPath(event.composedPath());
+      if (!editor || contentDirection(editor)) return;
+      applyDirection(editor, core.firstStrongDirection(event.data));
     },
     true
   );
@@ -199,7 +212,7 @@
     "input",
     (event) => {
       if (!active || event.isComposing) return;
-      updateDirection(editableFromEvent(event));
+      updateDirection(editorFromPath(event.composedPath()));
     },
     true
   );
@@ -208,7 +221,7 @@
     "compositionend",
     (event) => {
       if (!active) return;
-      updateDirection(editableFromEvent(event));
+      updateDirection(editorFromPath(event.composedPath()));
     },
     true
   );
@@ -217,7 +230,7 @@
     "focusin",
     (event) => {
       if (!active) return;
-      updateDirection(editableFromEvent(event));
+      updateDirection(editorFromPath(event.composedPath()));
     },
     true
   );

@@ -1,46 +1,69 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const {
-  firstStrongDirection,
-  directionForEdit
-} = require("../../src/direction-core.js");
+const { firstStrongDirection } = require("../../src/direction-core.js");
 
-test("detects Hebrew as RTL", () => {
-  assert.equal(firstStrongDirection("שלום עולם"), "rtl");
+const mark = (codePoint) => String.fromCodePoint(codePoint);
+const RLM = mark(0x200f);
+const ALM = mark(0x061c);
+const LRM = mark(0x200e);
+const ZWNJ = mark(0x200c);
+
+const rtlPrompts = {
+  Hebrew: "שלום עולם",
+  Yiddish: "גוט מאָרגן",
+  Arabic: "مرحبا بالعالم",
+  Persian: "سلام دنیا، چطوری؟",
+  Urdu: "ہیلو دنیا",
+  Pashto: "سلام نړۍ",
+  "Kurdish (Sorani)": "سڵاو جیهان",
+  Uyghur: "ياخشىمۇسىز",
+  Sindhi: "ڀلي ڪري آيا",
+  Syriac: "ܫܠܡܐ",
+  Dhivehi: "ހެލޯ",
+  "N'Ko": "ߒߞߏ",
+  "Hebrew presentation forms": mark(0xfb2a),
+  "Arabic presentation forms": mark(0xfefb),
+  Adlam: mark(0x1e900) + mark(0x1e922),
+  "Hanifi Rohingya": mark(0x10d00)
+};
+
+for (const [language, prompt] of Object.entries(rtlPrompts)) {
+  test(`detects ${language} as RTL`, () => {
+    assert.equal(firstStrongDirection(prompt), "rtl");
+  });
+}
+
+test("detects left-to-right scripts as LTR", () => {
+  for (const prompt of ["Hello", "Привет", "Γειά σου", "你好", "こんにちは", "नमस्ते", "안녕하세요"]) {
+    assert.equal(firstStrongDirection(prompt), "ltr", prompt);
+  }
 });
 
-test("ignores punctuation and numbers before Hebrew", () => {
+test("ignores numbers, punctuation, and combining marks before the first letter", () => {
   assert.equal(firstStrongDirection("123... שלום"), "rtl");
+  assert.equal(firstStrongDirection("۱۲۳ - سلام"), "rtl");
+  assert.equal(firstStrongDirection("٣٤٥ - Hello"), "ltr");
+  assert.equal(firstStrongDirection(mark(0x05b0) + "Hello"), "ltr");
 });
 
-test("ignores Hebrew combining marks until it finds a letter", () => {
-  assert.equal(firstStrongDirection("\u05B0Hello"), "ltr");
+test("ignores the zero-width non-joiner used in Persian and Urdu", () => {
+  assert.equal(firstStrongDirection(ZWNJ + "می" + ZWNJ + "خواهم"), "rtl");
 });
 
-test("detects Latin text as LTR", () => {
-  assert.equal(firstStrongDirection("Hello world"), "ltr");
-});
-
-test("keeps Hebrew-first mixed text RTL", () => {
+test("keeps the direction of the first letter in mixed-language prompts", () => {
   assert.equal(firstStrongDirection("כתוב summary קצר"), "rtl");
-});
-
-test("keeps English-first mixed text LTR", () => {
+  assert.equal(firstStrongDirection("اكتب summary قصير"), "rtl");
   assert.equal(firstStrongDirection("Summarize המאמר הזה"), "ltr");
 });
 
-test("returns no direction for neutral text", () => {
-  assert.equal(firstStrongDirection("123 - :)"), null);
+test("honors explicit direction marks", () => {
+  assert.equal(firstStrongDirection(RLM + "ChatGPT"), "rtl");
+  assert.equal(firstStrongDirection(ALM + "ChatGPT"), "rtl");
+  assert.equal(firstStrongDirection(LRM + "שלום"), "ltr");
 });
 
-test("uses inserted Hebrew for an empty field before browser insertion", () => {
-  assert.equal(directionForEdit("", "ש", null), "rtl");
-});
-
-test("does not flip a Hebrew sentence when English is inserted", () => {
-  assert.equal(directionForEdit("שלום", "AI", "rtl"), "rtl");
-});
-
-test("retains the previous direction while the field is empty", () => {
-  assert.equal(directionForEdit("", "", "rtl"), "rtl");
+test("returns no direction for neutral or missing text", () => {
+  for (const text of ["123 - :)", "", " \n\t", null, undefined]) {
+    assert.equal(firstStrongDirection(text), null);
+  }
 });

@@ -10,6 +10,7 @@
 
   function render() {
     enabledToggle.checked = settings.enabled;
+    enabledToggle.disabled = false;
     siteToggle.checked = host ? !settings.disabledHosts.includes(host) : false;
     siteToggle.disabled = !settings.enabled || !host;
     siteSetting.classList.toggle("disabled", siteToggle.disabled);

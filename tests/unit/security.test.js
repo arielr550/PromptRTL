@@ -2,6 +2,8 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
+const vm = require("node:vm");
+const { packageFiles } = require("../../scripts/package.js");
 
 const root = path.resolve(__dirname, "../..");
 const manifest = JSON.parse(fs.readFileSync(path.join(root, "manifest.json"), "utf8"));
@@ -66,5 +68,37 @@ test("avoids background and iframe-wide browsing work", () => {
 
 test("avoids layout-sensitive editor reads", () => {
   assert.doesNotMatch(runtimeSource, /\.innerText\b/);
-  assert.match(runtimeSource, /\.textContent\b/);
+});
+
+test("packages every referenced file and nothing used only for development", () => {
+  const files = new Set(packageFiles());
+  const referenced = [
+    "manifest.json",
+    ...Object.values(manifest.icons),
+    ...Object.values(manifest.action.default_icon),
+    manifest.action.default_popup,
+    "popup/popup.css",
+    "popup/popup.js",
+    ...manifest.content_scripts.flatMap((script) => [...script.js, ...script.css])
+  ];
+
+  for (const file of referenced) assert.ok(files.has(file), `${file} is missing from the package`);
+  for (const file of files) {
+    assert.doesNotMatch(file, /^(tests|scripts|node_modules|dist|\.github)\/|^package(-lock)?\.json$|logo/);
+  }
+});
+
+test("packaged scripts and JSON files parse", () => {
+  for (const file of packageFiles()) {
+    const source = fs.readFileSync(path.join(root, file), "utf8");
+    if (file.endsWith(".js")) new vm.Script(source, { filename: file });
+    if (file.endsWith(".json")) JSON.parse(source);
+  }
+});
+
+test("popup controls stay disabled until settings have loaded", () => {
+  const popupHtml = fs.readFileSync(path.join(root, "popup/popup.html"), "utf8");
+  for (const id of ["enabled", "site-enabled"]) {
+    assert.match(popupHtml, new RegExp(`<input[^>]*id="${id}"[^>]*\\sdisabled`));
+  }
 });
