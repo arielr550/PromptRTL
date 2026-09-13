@@ -31,7 +31,7 @@
         const passed =
           hebrew.getAttribute("dir") === "rtl" &&
           english.getAttribute("dir") === "ltr" &&
-          !email.hasAttribute("data-input-direction-helper");
+          !email.hasAttribute("data-promptrtl");
 
         document.body.dataset.testResult = passed ? "passed" : "failed";
       }, 750);

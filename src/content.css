@@ -1,10 +1,10 @@
-[data-input-direction-helper="rtl"] {
+[data-promptrtl="rtl"] {
   direction: rtl !important;
   text-align: right !important;
   unicode-bidi: plaintext !important;
 }
 
-[data-input-direction-helper="ltr"] {
+[data-promptrtl="ltr"] {
   direction: ltr !important;
   text-align: left !important;
   unicode-bidi: plaintext !important;

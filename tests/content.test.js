@@ -17,9 +17,9 @@ class Element {
   removeAttribute(name) { this.attributes.delete(name); }
   get contentEditable() { return this.getAttribute("contenteditable") ?? "inherit"; }
   closest(selector) {
-    assert.equal(selector, "[data-input-direction-helper-ignore]");
+    assert.equal(selector, "[data-promptrtl-ignore]");
     for (let node = this; node; node = node.parentElement) {
-      if (node.hasAttribute("data-input-direction-helper-ignore")) return node;
+      if (node.hasAttribute("data-promptrtl-ignore")) return node;
     }
     return null;
   }
@@ -40,7 +40,7 @@ function setup() {
     addEventListener: (name, listener) => listeners.set(name, listener)
   };
   vm.runInNewContext(fs.readFileSync(require.resolve("../src/content.js"), "utf8"), {
-    RTLInputDirection: core, Element, HTMLInputElement, HTMLTextAreaElement,
+    PromptRTLCore: core, Element, HTMLInputElement, HTMLTextAreaElement,
     WeakRef, FinalizationRegistry, document,
     window: { location: { hostname: "example.com" } },
     chrome: { storage: {
@@ -65,7 +65,7 @@ test("updates supported fields and restores the original direction", () => {
   assert.equal(field.getAttribute("dir"), "rtl");
   app.enable(false);
   assert.equal(field.getAttribute("dir"), "auto");
-  assert.equal(field.hasAttribute("data-input-direction-helper"), false);
+  assert.equal(field.hasAttribute("data-promptrtl"), false);
 });
 
 test("captures a fresh original direction after each re-enable", () => {
@@ -86,7 +86,7 @@ for (const boundary of ["ignored", "noneditable", "password", "readonly"]) {
     const app = setup();
     const editor = new Element({ contenteditable: "true" });
     let child;
-    if (boundary === "ignored") child = new Element({ "data-input-direction-helper-ignore": "" }, editor);
+    if (boundary === "ignored") child = new Element({ "data-promptrtl-ignore": "" }, editor);
     if (boundary === "noneditable") child = new Element({ contenteditable: "false", role: "textbox" }, editor);
     if (boundary === "password" || boundary === "readonly") {
       child = new HTMLInputElement({}, editor);
@@ -94,8 +94,8 @@ for (const boundary of ["ignored", "noneditable", "password", "readonly"]) {
       child.readOnly = boundary === "readonly";
     }
     app.emit(child);
-    assert.equal(child.hasAttribute("data-input-direction-helper"), false);
-    assert.equal(editor.hasAttribute("data-input-direction-helper"), false);
+    assert.equal(child.hasAttribute("data-promptrtl"), false);
+    assert.equal(editor.hasAttribute("data-promptrtl"), false);
   });
 }
 

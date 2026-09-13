@@ -1,7 +1,7 @@
-(function startInputDirectionHelper() {
+(function startPromptRTL() {
   "use strict";
 
-  const core = globalThis.RTLInputDirection;
+  const core = globalThis.PromptRTLCore;
   const managedElements = new Set();
   const elementReferences = new WeakMap();
   const elementFinalizer =
@@ -53,7 +53,7 @@
   }
 
   function isEditable(element) {
-    if (!(element instanceof Element) || element.closest("[data-input-direction-helper-ignore]")) {
+    if (!(element instanceof Element) || element.closest("[data-promptrtl-ignore]")) {
       return false;
     }
 
@@ -83,7 +83,7 @@
 
       // An excluded region is a boundary, not a reason to keep searching for
       // another editor above it in the bubbling event path.
-      if (node.closest("[data-input-direction-helper-ignore]")) return null;
+      if (node.closest("[data-promptrtl-ignore]")) return null;
       if (node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement) {
         return isEditable(node) ? node : null;
       }
@@ -132,7 +132,7 @@
 
     if (
       element.getAttribute("dir") === direction &&
-      element.getAttribute("data-input-direction-helper") === direction
+      element.getAttribute("data-promptrtl") === direction
     ) {
       return;
     }
@@ -140,7 +140,7 @@
     rememberOriginalState(element);
     trackElement(element);
     element.setAttribute("dir", direction);
-    element.setAttribute("data-input-direction-helper", direction);
+    element.setAttribute("data-promptrtl", direction);
   }
 
   function updateDirection(element, insertedText = "", currentText) {
@@ -149,7 +149,7 @@
     const direction = core.directionForEdit(
       currentText === undefined ? textOf(element) : currentText,
       insertedText,
-      element.getAttribute("data-input-direction-helper")
+      element.getAttribute("data-promptrtl")
     );
     applyDirection(element, direction);
   }
@@ -158,7 +158,7 @@
     const original = originalState.get(element);
     if (!original) return;
 
-    element.removeAttribute("data-input-direction-helper");
+    element.removeAttribute("data-promptrtl");
     if (original.hadDirection) {
       element.setAttribute("dir", original.direction);
     } else {

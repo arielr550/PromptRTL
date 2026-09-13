@@ -58,7 +58,7 @@ node --test tests/*.test.js
 ```
 
 Sites can opt an individual editor out by adding the
-`data-input-direction-helper-ignore` attribute to it or an ancestor.
+`data-promptrtl-ignore` attribute to it or an ancestor.
 
 ## Current limits
 

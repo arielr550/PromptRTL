@@ -5,7 +5,7 @@
     module.exports = api;
   }
 
-  root.RTLInputDirection = api;
+  root.PromptRTLCore = api;
 })(typeof globalThis !== "undefined" ? globalThis : this, function createDirectionCore() {
   "use strict";
 
