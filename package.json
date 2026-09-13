@@ -1,0 +1,22 @@
+{
+  "name": "promptrtl",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Chrome extension that fixes RTL text direction in AI prompt boxes, privately.",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test \"tests/unit/*.test.js\"",
+    "test:e2e": "node --test --test-concurrency=1 \"tests/e2e/*.test.js\"",
+    "package": "node scripts/package.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.63.0",
+    "prosemirror-commands": "^1.7.2",
+    "prosemirror-keymap": "^1.2.3",
+    "prosemirror-model": "^1.25.11",
+    "prosemirror-schema-basic": "^1.2.4",
+    "prosemirror-state": "^1.4.4",
+    "prosemirror-view": "^1.42.3",
+    "quill": "^2.0.3"
+  }
+}

@@ -2,7 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const vm = require("node:vm");
-const core = require("../src/direction-core.js");
+const core = require("../../src/direction-core.js");
 
 // A small DOM/event harness exercises the real content script without dependencies.
 class Element {
@@ -39,7 +39,7 @@ function setup() {
     activeElement: null,
     addEventListener: (name, listener) => listeners.set(name, listener)
   };
-  vm.runInNewContext(fs.readFileSync(require.resolve("../src/content.js"), "utf8"), {
+  vm.runInNewContext(fs.readFileSync(require.resolve("../../src/content.js"), "utf8"), {
     PromptRTLCore: core, Element, HTMLInputElement, HTMLTextAreaElement,
     WeakRef, FinalizationRegistry, document,
     window: { location: { hostname: "example.com" } },

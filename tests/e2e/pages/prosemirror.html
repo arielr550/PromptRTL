@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>ProseMirror composer (ChatGPT / Claude style)</title>
+    <link rel="stylesheet" href="/node_modules/prosemirror-view/style/prosemirror.css" />
+    <style>
+      body { font: 16px sans-serif; }
+      .ProseMirror { width: 420px; min-height: 80px; border: 1px solid #999; padding: 6px; }
+      .ProseMirror p { margin: 0; }
+      .mention { background: #dde3f5; border-radius: 4px; padding: 0 3px; }
+    </style>
+    <script type="importmap">
+      {
+        "imports": {
+          "orderedmap": "/node_modules/orderedmap/dist/index.js",
+          "w3c-keyname": "/node_modules/w3c-keyname/index.js",
+          "prosemirror-model": "/node_modules/prosemirror-model/dist/index.js",
+          "prosemirror-transform": "/node_modules/prosemirror-transform/dist/index.js",
+          "prosemirror-state": "/node_modules/prosemirror-state/dist/index.js",
+          "prosemirror-view": "/node_modules/prosemirror-view/dist/index.js",
+          "prosemirror-keymap": "/node_modules/prosemirror-keymap/dist/index.js",
+          "prosemirror-commands": "/node_modules/prosemirror-commands/dist/index.js",
+          "prosemirror-schema-basic": "/node_modules/prosemirror-schema-basic/dist/index.js"
+        }
+      }
+    </script>
+    <script src="log.js"></script>
+  </head>
+  <body>
+    <div id="composer"></div>
+
+    <script type="module">
+      import { Schema } from "prosemirror-model";
+      import { schema as basicSchema } from "prosemirror-schema-basic";
+      import { EditorState } from "prosemirror-state";
+      import { EditorView } from "prosemirror-view";
+      import { keymap } from "prosemirror-keymap";
+      import { baseKeymap } from "prosemirror-commands";
+
+      // Mentions render as non-editable chips, like @-mentions and file pills.
+      const schema = new Schema({
+        nodes: basicSchema.spec.nodes.addToEnd("mention", {
+          inline: true,
+          group: "inline",
+          atom: true,
+          attrs: { label: {} },
+          toDOM: (node) => ["span", { class: "mention" }, node.attrs.label],
+          parseDOM: [{ tag: "span.mention", getAttrs: (dom) => ({ label: dom.textContent }) }]
+        }),
+        marks: basicSchema.spec.marks
+      });
+
+      const view = new EditorView(document.querySelector("#composer"), {
+        state: EditorState.create({ schema, plugins: [keymap(baseKeymap)] }),
+        attributes: { id: "prompt-textarea", role: "textbox" }
+      });
+
+      window.editor = {
+        text: () =>
+          view.state.doc.textBetween(0, view.state.doc.content.size, "\n", (node) => node.attrs.label ?? ""),
+        clear() {
+          const { state } = view;
+          view.dispatch(state.tr.replaceWith(0, state.doc.content.size, schema.nodes.paragraph.create()));
+        },
+        appendText(text) {
+          const { state } = view;
+          view.dispatch(state.tr.insertText(text, state.doc.content.size - 1));
+        },
+        insertMentionAtStart(label) {
+          const { state } = view;
+          view.dispatch(state.tr.insert(1, schema.nodes.mention.create({ label })));
+        }
+      };
+      window.ready = true;
+    </script>
+  </body>
+</html>

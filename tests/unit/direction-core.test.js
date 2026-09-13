@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const {
   firstStrongDirection,
   directionForEdit
-} = require("../src/direction-core.js");
+} = require("../../src/direction-core.js");
 
 test("detects Hebrew as RTL", () => {
   assert.equal(firstStrongDirection("שלום עולם"), "rtl");
