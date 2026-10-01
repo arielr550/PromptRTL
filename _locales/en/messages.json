@@ -1,6 +1,6 @@
 {
   "extDescription": {
-    "message": "Fixes text direction in AI chat boxes for Hebrew, Arabic, Persian, Urdu, and other RTL languages. Fully private.",
+    "message": "Fixes text direction in AI chat boxes for Hebrew, Arabic, Persian (Farsi), and Urdu. Fully private.",
     "description": "Chrome Web Store and extensions page description. Maximum 132 characters."
   },
   "popupTagline": {

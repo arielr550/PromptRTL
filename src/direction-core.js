@@ -9,13 +9,11 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function createDirectionCore() {
   "use strict";
 
-  // Unicode reserves these blocks for right-to-left scripts: Hebrew; Arabic,
-  // including the letters used by Persian, Urdu, Pashto, Kurdish, Sindhi, and
-  // Uyghur; Syriac, Thaana, N'Ko, their presentation forms; and newer RTL
-  // scripts such as Adlam and Hanifi Rohingya. Block ranges, rather than
-  // script names, keep working as Unicode adds letters inside them.
-  const RTL_LETTER =
-    /[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF\u{10800}-\u{10FFF}\u{1E800}-\u{1EFFF}]/u;
+  // Supported languages: Hebrew, Arabic, Persian (Farsi), and Urdu. Persian
+  // and Urdu use the Arabic script. Script properties include presentation
+  // forms and extended letters without including unrelated Unicode blocks.
+  // Languages sharing these scripts cannot be distinguished by direction.
+  const RTL_LETTER = /[\p{Script=Hebrew}\p{Script=Arabic}]/u;
   const ANY_LETTER = /\p{L}/u;
   const RIGHT_TO_LEFT_MARK = "\u200F";
   const ARABIC_LETTER_MARK = "\u061C";

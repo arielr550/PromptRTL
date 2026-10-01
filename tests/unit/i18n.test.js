@@ -14,7 +14,7 @@ const locales = Object.fromEntries(
 const englishKeys = Object.keys(locales.en).sort();
 const rtlLocales = new Set(["ar", "fa", "he", "ur"]);
 
-test("ships English plus the major RTL languages", () => {
+test("ships only Hebrew, Arabic, Persian, Urdu, and the English fallback", () => {
   assert.deepEqual(Object.keys(locales).sort(), ["ar", "en", "fa", "he", "ur"]);
 });
 

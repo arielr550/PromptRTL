@@ -8,10 +8,12 @@ A small, private Manifest V3 Chrome extension that fixes text direction as you
 type in AI chat boxes such as ChatGPT, Claude, and Gemini, as well as search
 boxes, text areas, and other `contenteditable` editors.
 
-It supports right-to-left languages written in the Hebrew, Arabic, Syriac,
-Thaana, and N'Ko scripts, including Hebrew, Yiddish, Arabic, Persian, Urdu,
-Pashto, Kurdish (Sorani), Sindhi, Uyghur, and Dhivehi. The popup is available in
-English, Hebrew, Arabic, Persian, and Urdu.
+It supports Hebrew, Arabic, Persian (Farsi), and Urdu. The popup is available
+in those four languages, with English as the default fallback.
+
+Direction detection recognizes Hebrew and Arabic scripts, including the
+letters used in Persian and Urdu. It does not identify the language itself,
+so text in other languages that share these scripts may also be directed RTL.
 
 ## Privacy first
 
@@ -25,7 +27,7 @@ permission rationale and security model.
 
 ## How it behaves
 
-- A prompt whose first letter is from a right-to-left script becomes
+- A prompt whose first letter is from the Hebrew or Arabic script becomes
   right-to-left and right-aligned.
 - A prompt whose first letter is from a left-to-right script (Latin, Cyrillic,
   Greek, CJK, and so on) stays left-to-right and left-aligned.

@@ -10,21 +10,11 @@ const ZWNJ = mark(0x200c);
 
 const rtlPrompts = {
   Hebrew: "שלום עולם",
-  Yiddish: "גוט מאָרגן",
   Arabic: "مرحبا بالعالم",
   Persian: "سلام دنیا، چطوری؟",
   Urdu: "ہیلو دنیا",
-  Pashto: "سلام نړۍ",
-  "Kurdish (Sorani)": "سڵاو جیهان",
-  Uyghur: "ياخشىمۇسىز",
-  Sindhi: "ڀلي ڪري آيا",
-  Syriac: "ܫܠܡܐ",
-  Dhivehi: "ހެލޯ",
-  "N'Ko": "ߒߞߏ",
   "Hebrew presentation forms": mark(0xfb2a),
-  "Arabic presentation forms": mark(0xfefb),
-  Adlam: mark(0x1e900) + mark(0x1e922),
-  "Hanifi Rohingya": mark(0x10d00)
+  "Arabic presentation forms": mark(0xfefb)
 };
 
 for (const [language, prompt] of Object.entries(rtlPrompts)) {
@@ -32,6 +22,13 @@ for (const [language, prompt] of Object.entries(rtlPrompts)) {
     assert.equal(firstStrongDirection(prompt), "rtl");
   });
 }
+
+test("does not classify letters outside Hebrew and Arabic scripts as supported RTL", () => {
+  // Representative letters from the unrelated blocks previously supported.
+  for (const codePoint of [0x0710, 0x0780, 0x07ca, 0x0800, 0x0840, 0x10d00, 0x1e900]) {
+    assert.equal(firstStrongDirection(mark(codePoint)), "ltr", `U+${codePoint.toString(16)}`);
+  }
+});
 
 test("detects left-to-right scripts as LTR", () => {
   for (const prompt of ["Hello", "Привет", "Γειά σου", "你好", "こんにちは", "नमस्ते", "안녕하세요"]) {
