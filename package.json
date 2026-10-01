@@ -2,12 +2,11 @@
   "name": "promptrtl",
   "version": "0.1.0",
   "private": true,
-  "description": "Chrome extension that fixes RTL text direction in AI prompt boxes, privately.",
+  "description": "Personal Chrome extension for Hebrew and English text direction.",
   "license": "MIT",
   "scripts": {
     "test": "node --test \"tests/unit/*.test.js\"",
-    "test:e2e": "node --test --test-concurrency=1 --test-timeout=60000 \"tests/e2e/*.test.js\"",
-    "package": "node scripts/package.js"
+    "test:e2e": "node --test --test-concurrency=1 --test-timeout=60000 \"tests/e2e/*.test.js\""
   },
   "devDependencies": {
     "playwright": "^1.63.0",

@@ -1,6 +1,6 @@
 "use strict";
 
-// Launches Chromium with the packaged extension (exactly the files that ship)
+// Launches Chromium with the project loaded as an unpacked extension
 // and serves local editor fixtures over HTTP, where the content script runs.
 
 const crypto = require("node:crypto");
@@ -9,7 +9,6 @@ const http = require("node:http");
 const os = require("node:os");
 const path = require("node:path");
 const { chromium } = require("playwright");
-const { stageExtension } = require("../../scripts/package.js");
 
 const root = path.resolve(__dirname, "../..");
 const servedAreas = {
@@ -46,27 +45,21 @@ function unpackedExtensionId(directory) {
   return hash.replace(/[0-9a-f]/g, (digit) => String.fromCharCode(97 + parseInt(digit, 16)));
 }
 
-async function launchBrowser({ locale } = {}) {
-  const { outputDirectory } = stageExtension(path.join(root, "dist", "e2e", "promptrtl"));
+async function launchBrowser() {
   const userDataDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "promptrtl-e2e-"));
   const server = await startServer();
   const args = [
-    `--disable-extensions-except=${outputDirectory}`,
-    `--load-extension=${outputDirectory}`
+    `--disable-extensions-except=${root}`,
+    `--load-extension=${root}`
   ];
-  // Chromium on Linux takes its UI language from the environment, not --lang.
-  if (locale) args.push(`--lang=${locale}`);
-  const env = locale ? { ...process.env, LANGUAGE: locale, LANG: `${locale}.UTF-8` } : process.env;
 
   const context = await chromium.launchPersistentContext(userDataDirectory, {
     channel: "chromium",
     headless: !process.env.HEADED,
-    locale,
-    args,
-    env
+    args
   });
   const origin = `http://127.0.0.1:${server.address().port}`;
-  const extensionId = unpackedExtensionId(outputDirectory);
+  const extensionId = unpackedExtensionId(root);
 
   const browser = {
     context,

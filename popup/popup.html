@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="he" dir="rtl">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -12,27 +12,27 @@
         <img class="mark" src="../assets/icons/icon48.png" alt="" />
         <div>
           <h1>PromptRTL</h1>
-          <p data-i18n="popupTagline"></p>
+          <p>כיוון טקסט אוטומטי בעברית ובאנגלית</p>
         </div>
       </header>
 
       <label class="setting">
         <span>
-          <strong data-i18n="enabledLabel"></strong>
-          <small data-i18n="enabledDetail"></small>
+          <strong>התוסף פעיל</strong>
+          <small>זיהוי אוטומטי של כיוון הטקסט</small>
         </span>
         <input id="enabled" type="checkbox" disabled />
       </label>
 
       <label class="setting site-setting disabled">
         <span>
-          <strong data-i18n="siteLabel"></strong>
-          <small id="hostname"></small>
+          <strong>פעיל באתר זה</strong>
+          <small id="hostname" dir="ltr"></small>
         </span>
         <input id="site-enabled" type="checkbox" disabled />
       </label>
 
-      <p class="hint" data-i18n="hint"></p>
+      <p class="hint">כיוון התיבה נקבע לפי האות הראשונה. אחרי התקנה או שינוי בקבצים, יש לרענן את הלשונית.</p>
     </main>
     <script src="popup.js"></script>
   </body>

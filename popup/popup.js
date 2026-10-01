@@ -8,23 +8,13 @@
   let host = null;
   let settings = { enabled: true, disabledHosts: [] };
 
-  // Direction and language come from the locale whose messages Chrome chose,
-  // so an unsupported RTL browser language never shows English laid out RTL.
-  function localize() {
-    document.documentElement.lang = chrome.i18n.getMessage("languageCode");
-    document.documentElement.dir = chrome.i18n.getMessage("textDirection");
-    for (const element of document.querySelectorAll("[data-i18n]")) {
-      element.textContent = chrome.i18n.getMessage(element.dataset.i18n);
-    }
-  }
-
   function render() {
     enabledToggle.checked = settings.enabled;
     enabledToggle.disabled = false;
     siteToggle.checked = host ? !settings.disabledHosts.includes(host) : false;
     siteToggle.disabled = !settings.enabled || !host;
     siteSetting.classList.toggle("disabled", siteToggle.disabled);
-    hostnameLabel.textContent = host || chrome.i18n.getMessage("siteUnavailable");
+    hostnameLabel.textContent = host || "לא זמין בדף זה";
   }
 
   function save(patch) {
@@ -46,8 +36,6 @@
     }
     save({ disabledHosts: [...disabledHosts] });
   });
-
-  localize();
 
   Promise.all([
     chrome.storage.local.get({ enabled: true, disabledHosts: [] }),
