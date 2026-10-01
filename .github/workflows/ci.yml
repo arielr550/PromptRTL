@@ -27,14 +27,5 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Browser tests with the packaged extension
+      - name: Browser tests
         run: npm run test:e2e
-
-      - name: Package extension
-        run: npm run package
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: promptrtl-extension
-          path: dist/promptrtl-*.zip
-          if-no-files-found: error

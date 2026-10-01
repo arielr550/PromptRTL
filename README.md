@@ -1,104 +1,61 @@
-<p align="center">
-  <img src="assets/logo.png" width="160" alt="PromptRTL logo" />
-</p>
-
 # PromptRTL
 
-A small, private Manifest V3 Chrome extension that fixes text direction as you
-type in AI chat boxes such as ChatGPT, Claude, and Gemini, as well as search
-boxes, text areas, and other `contenteditable` editors.
+A personal, lightweight Chrome extension for typing Hebrew and English in AI
+prompt boxes, search fields, textareas, and editable text on websites.
 
-It supports right-to-left languages written in the Hebrew, Arabic, Syriac,
-Thaana, and N'Ko scripts, including Hebrew, Yiddish, Arabic, Persian, Urdu,
-Pashto, Kurdish (Sorani), Sindhi, Uyghur, and Dhivehi. The popup is available in
-English, Hebrew, Arabic, Persian, and Urdu.
+The first letter sets the direction: Hebrew is right-to-left, English is
+left-to-right. Numbers, punctuation, and emoji do not decide the direction.
+Mixed prompts keep the direction of their first letter, and an empty box keeps
+its last direction until you type a new letter. Explicit RLM/LRM marks work too.
+The popup is always in Hebrew.
 
-## Privacy first
+## Install and use
 
-All direction detection happens locally in the browser. Prompt text is never
-logged, stored, or sent over the network. The only persisted data is the enabled
-setting and hostnames the user explicitly disables, stored with
-`chrome.storage.local` so they are not synced to a Google account.
+1. Keep this folder on the Mac where Chrome runs. If it is only on `cosmos`,
+   copy it to the Mac first; Chrome needs a local folder.
+2. Open `chrome://extensions` and turn on **Developer mode**.
+3. Click **Load unpacked** and select this project folder.
+4. Refresh any already-open tabs and start typing.
 
-See [PRIVACY.md](PRIVACY.md) and [SECURITY.md](SECURITY.md) for the complete
-permission rationale and security model.
+Use the popup to turn the extension off globally or for the current hostname.
+Turning it off restores the editors' original direction. After changing files,
+click **Reload** on `chrome://extensions` and refresh the affected tabs.
+No build or dependency installation is needed to use the extension.
 
-## How it behaves
+## Privacy and permissions
 
-- A prompt whose first letter is from a right-to-left script becomes
-  right-to-left and right-aligned.
-- A prompt whose first letter is from a left-to-right script (Latin, Cyrillic,
-  Greek, CJK, and so on) stays left-to-right and left-aligned.
-- Numbers, punctuation, and emoji are ignored when choosing the direction.
-  Explicit RLM, ALM, and LRM marks are honored.
-- English words, product names, and code inside an RTL prompt do not flip the
-  whole box, and vice versa.
-- Each editor has one direction, so lines holding only numbers or bullets stay
-  aligned with the rest of the prompt.
-- Non-editable chips inside an editor, such as @-mentions and attached-file
-  pills, do not decide the direction.
-- The direction stays in place while the box is temporarily empty, then follows
-  the next first letter you type.
-- Password, email, URL, telephone, and number inputs are deliberately ignored.
-- The popup can turn PromptRTL off everywhere or only on the current site.
-  Turning it off restores each box's original direction.
+Text stays in memory on your device: no logging, network requests, analytics,
+or runtime dependencies. Only the enabled setting and disabled hostnames are
+saved in `chrome.storage.local` (not Chrome Sync).
 
-The extension cannot know the active keyboard layout before a character is
-typed; browsers intentionally do not expose that reliably. It uses
-`beforeinput` to recognize the first letter before it is inserted, which makes
-the switch feel immediate.
+The extension runs on HTTP/HTTPS pages so it works across AI tools and other
+text fields. `storage` saves preferences; `activeTab` lets the popup identify
+the current site. Password, email, URL, telephone, numeric, disabled, and
+read-only fields are ignored. Sites can also opt out an editor or an ancestor
+with `data-promptrtl-ignore`.
 
-## Install locally
+## Limits
 
-1. Open `chrome://extensions` in Chrome.
-2. Turn on **Developer mode**.
-3. Click **Load unpacked**.
-4. Choose this project folder, or `dist/promptrtl` after running
-   `npm run package`.
-5. Open an AI site, refresh its tab once, and type in a prompt box.
+- Chrome blocks extensions on its internal pages and protected websites.
+- Editors in iframes and closed shadow DOM are not processed.
+- Inside open shadow DOM, direction is set, but alignment follows site styles.
+- Each editor has one direction; individual lines do not switch independently.
+- Direction updates on typing or focus. Programmatic text changes are reconciled
+  on the next input or focus event.
+- Detection identifies Hebrew characters, not the language itself. Other text
+  written with the same characters can also trigger RTL.
 
-Changes to this project require clicking the extension's **Reload** button on
-`chrome://extensions`, then refreshing the page being tested.
-
-## Development
-
-The extension has no build step and no runtime dependencies. The development
-dependencies (Playwright, ProseMirror, and Quill) are used only by the tests.
+## Optional development checks
 
 ```sh
-npm install
-npm test                         # direction, translation, security, and packaging checks
-npx playwright install chromium  # once, for the browser tests
-npm run test:e2e                 # loads the packaged extension into Chromium
-npm run package                  # writes dist/promptrtl/ and dist/promptrtl-<version>.zip
+npm ci
+npm test
+npx playwright install chromium  # once, for browser tests
+npm run test:e2e
 ```
 
-The browser tests type Hebrew, Arabic, Persian, and Urdu into plain fields, a
-text area inside open shadow DOM, a ProseMirror composer (the editor family
-behind ChatGPT's and Claude's prompt boxes), and a Quill composer (used by
-Gemini). Set `HEADED=1` to watch them run. They use local copies of those
-editors, so a quick manual check on the live sites is still worthwhile before a
-release.
+Browser tests load this folder directly into Chromium and exercise plain fields,
+open shadow DOM, ProseMirror, Quill, and the popup. These development dependencies
+are used only for tests. The automated checks also run on pull requests.
 
-Sites can opt an individual editor out by adding the `data-promptrtl-ignore`
-attribute to it or an ancestor.
-
-## Current limits
-
-- Chrome blocks extensions on internal pages such as `chrome://` and the Chrome
-  Web Store.
-- Editors embedded inside iframes are not processed, which keeps PromptRTL from
-  loading separately in every ad, widget, and embedded page while browsing.
-- Inputs inside closed shadow DOM cannot be reached by content scripts. Inside
-  open shadow DOM, PromptRTL sets the `dir` attribute, but its alignment styles
-  cannot reach in, so the site's own styling for that direction applies.
-- Each editor has a single direction. A line in another language keeps the
-  editor's direction on screen (for example, an English line in a Hebrew prompt
-  is right-aligned); the text sent to the AI is unaffected.
-- The direction updates when you type in or focus a box. If a site replaces the
-  text on its own, such as clearing the box after sending, the previous
-  direction stays until your next keystroke.
-
-## License
-
-[MIT](LICENSE)
+[MIT license](LICENSE).
